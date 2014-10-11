@@ -47,18 +47,28 @@ module.exports = {
 	},
 
 	serverMiddleware: function(config) {
-		var options = config.options;
+		var options = config.options,
+			evt = browserSync.emitter;
 
 		options.liveReload = false;
+
+		evt.on('init', function () {
+			console.log('BrowserSync is running!');
+		});
 
 		browserSync({
 			reloadDelay: 10,
 			notify: false,
+			injectChanges: true,
 			proxy: config.options.host + ':' + config.options.port || 4200
 		});
 	},
 
 	postBuild: function(config) {
+		// todo: find a hook to place notifications that a build
+		// has started or has failed
+		// browserSync.notify("This message will only last a second", 1000);
+
 		if (!cssPathsChanged.length) {
 			return false;
 		}
