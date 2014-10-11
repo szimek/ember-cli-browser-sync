@@ -1,53 +1,65 @@
-var browserSync = require("browser-sync");
+var browserSync    = require('browser-sync'),
+	BroccoliFilter = require('broccoli-filter');
+
+// yes, ghetto.  need to talk to robert jackson
+// to see if there is a better way of doing this
+var cssPathsChanged = [];
+
+function RegistryPlugin(inputTree) {
+	if (!(this instanceof RegistryPlugin)) {
+		return new RegistryPlugin(inputTree);
+	}
+
+	this.inputTree = inputTree;
+}
+
+RegistryPlugin.prototype = Object.create(BroccoliFilter.prototype);
+RegistryPlugin.prototype.constructor = RegistryPlugin;
+RegistryPlugin.prototype.extensions = ['css'];
+RegistryPlugin.prototype.targetExtension = 'css';
+RegistryPlugin.prototype.processString = function(str, relativePath) {
+	cssPathsChanged.push(relativePath);
+	return str;
+};
+
+
 module.exports = {
-  name: 'ember-cli-browser-sync',
-  serverMiddleware: function(config) {
-    var app = config.app,
-      options = config.options;
-      // browserSync;
+	name: 'ember-cli-browser-sync',
 
-    // if (options.browserSync !== true) { return; }
+	// compileStyles: function () {
+	// 	return this._super.compileStyles.apply(this, arguments);
+	// },
 
-    // var browserSync = require("browser-sync");
+	included: function(app) {
+		this._super.included.apply(this, arguments);
 
-    options.liveReload = false;
-    browserSync({
-        // server: {
-        reloadDelay: 10,
-        notify: false,
-        proxy: "gamebreeze-lm.yahoo-inc.com:4200"
-        // }
-    });
+		app.registry.add('css', {
+			name: 'browser-sync',
+			ext: 'css',
+			toTree: function(tree) {
+				return RegistryPlugin(tree);
+			}
+		});
+	},
 
-    // app.use(browserSync({
-    //   // port: options.liveReloadPort
-    // }));
+	serverMiddleware: function(config) {
+		var options = config.options;
 
-    console.log('sups');
+		options.liveReload = false;
 
-  },
-  postBuild: function(config) {
+		browserSync({
+			reloadDelay: 10,
+			notify: false,
+			proxy: config.options.host + ':' + config.options.port || 4200
+		});
+	},
 
-    console.log(config);
-    browserSync.reload("app.css");
-  }
-  // ,
+	postBuild: function(config) {
+		if (!cssPathsChanged.length) {
+			return false;
+		}
 
-  // shouldUseMiddleware: function() {
-  //   var version = this.project.emberCLIVersion();
-  //   var portions = version.split('.');
-  //   portions = portions.map(function(portion) {
-  //     return Number(portion.split('-')[0]);
-  //   });
-  //
-  //   if (portions[0] > 0) {
-  //     return false;
-  //   } else if (portions[1] > 0) {
-  //     return false;
-  //   } else if (portions[2] > 46) {
-  //     return false;
-  //   } else {
-  //     return true;
-  //   }
-  // }
+		cssPathsChanged.forEach(function (path) { browserSync.reload(path); });
+		cssPathsChanged = [];
+	}
 };
