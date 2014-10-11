@@ -26,10 +26,6 @@ RegistryPlugin.prototype.processString = function(str, relativePath) {
 module.exports = {
 	name: 'ember-cli-browser-sync',
 
-	// compileStyles: function () {
-	// 	return this._super.compileStyles.apply(this, arguments);
-	// },
-
 	included: function(app) {
 		if(app.env !== 'development') {
 			return false;
@@ -46,34 +42,27 @@ module.exports = {
 		});
 	},
 
-	serverMiddleware: function(config) {
-		var options = config.options,
-			evt = browserSync.emitter;
-
-		options.liveReload = false;
-
-		evt.on('init', function () {
-			console.log('BrowserSync is running!');
-		});
-
+	serverMiddleware: function(/*config*/) {
 		browserSync({
 			reloadDelay: 10,
 			notify: false,
+			open: false,
 			injectChanges: true,
 			proxy: config.options.host + ':' + config.options.port || 4200
 		});
 	},
 
-	postBuild: function(config) {
-		// todo: find a hook to place notifications that a build
-		// has started or has failed
-		// browserSync.notify("This message will only last a second", 1000);
+	postBuild: function (/*results*/) {
+		this.project.liveReloadFilterPatterns = [/(\.+(js|html|json|hbs)$)/g]
 
 		if (!cssPathsChanged.length) {
 			return false;
 		}
 
-		cssPathsChanged.forEach(function (path) { browserSync.reload(path); });
+		console.log(cssPathsChanged);
+
+		browserSync.reload(cssPathsChanged);
+
 		cssPathsChanged = [];
 	}
 };
