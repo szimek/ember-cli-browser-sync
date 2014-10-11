@@ -42,7 +42,7 @@ module.exports = {
 		});
 	},
 
-	serverMiddleware: function(/*config*/) {
+	serverMiddleware: function(config) {
 		browserSync({
 			reloadDelay: 10,
 			notify: false,
