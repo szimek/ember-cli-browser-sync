@@ -33,6 +33,8 @@ module.exports = {
 
 		this._super.included.apply(this, arguments);
 
+		this.app = app;
+
 		app.registry.add('css', {
 			name: 'browser-sync',
 			ext: 'css',
@@ -43,26 +45,23 @@ module.exports = {
 	},
 
 	serverMiddleware: function(config) {
+		config.options.liveReload = false;
+
 		browserSync({
-			reloadDelay: 10,
-			notify: false,
-			open: false,
 			injectChanges: true,
-			proxy: config.options.host + ':' + config.options.port || 4200
+			reloadDelay:   10,
+			notify:        false,
+			open:          false,
+			proxy:         config.options.host + ':' + config.options.port || 4200
 		});
 	},
 
 	postBuild: function (/*results*/) {
-		this.project.liveReloadFilterPatterns = [/(\.+(js|html|json|hbs)$)/g]
-
 		if (!cssPathsChanged.length) {
-			return false;
+			browserSync.reload();
+		} else {
+			browserSync.reload(cssPathsChanged);
+			cssPathsChanged = []; // reset
 		}
-
-		console.log(cssPathsChanged);
-
-		browserSync.reload(cssPathsChanged);
-
-		cssPathsChanged = [];
 	}
 };
