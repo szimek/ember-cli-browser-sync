@@ -31,6 +31,10 @@ module.exports = {
 	// },
 
 	included: function(app) {
+		if(app.env !== 'development') {
+			return false;
+		}
+
 		this._super.included.apply(this, arguments);
 
 		app.registry.add('css', {
